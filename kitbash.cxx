@@ -28,7 +28,7 @@ typedef chrono::high_resolution_clock Clock;
 typedef chrono::duration<float> float_seconds;
 
 // define constants
-const string VERSION = "2.0.0a0016";
+const string VERSION = "2.0.0a0017";
 const bool kb_debug = false;
 
 // define global variables
@@ -742,7 +742,7 @@ class xp_cockpit_file {
 static void print_usage() {
     // Prints out usage syntax for kitbash.exe
 
-    cerr   << "Usage: kitbash.exe <switches> <options>\n"
+    cerr   << "Usage: kitbash <switches> <options>\n"
                 << "Switches:\n"
                 << "\t-h\t\tShow this help message.\n"
                 << "\t-o\t\tOverride all user prompts and go with what get's the job done.\n"
