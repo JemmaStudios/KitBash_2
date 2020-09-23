@@ -1,0 +1,3 @@
+// the configured options and settings for Test
+#define Kitbash_VERSION_MAJOR @Kitbash_VERSION_MAJOR@
+#define Kitbash_VERSION_MINOR @Kitbash_VERSION_MINOR@
