@@ -12,3 +12,13 @@ Kitbash will find the positioned object, determine the yaw, pitch, roll, and X, 
 
 Known limitations:
 You cannot kitbash an orphan manip file that has moving manipulators.  Yet...
+
+WINDOWS USERS:
+Just download the KITBASH.EXE file and run kitbash.exe from a command line prompt.
+
+MAC OS USERS:
+For now.  Download the kitbash.cxx file. Then run...
+clang++ -std=c++11 -stdlib=libc++ kitbash.cxx  -o kitbash
+then I'm told to...
+chmod +x kitbash
+then you can run ./kitbash from a command line
