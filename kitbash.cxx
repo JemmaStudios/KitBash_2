@@ -745,7 +745,7 @@ static void print_usage() {
     cerr   << "Usage: kitbash <switches> <options>\n"
                 << "Switches:\n"
                 << "\t-h\t\tShow this help message.\n"
-                << "\t-o\t\tOverride all user prompts and go with what get's the job done.\n"
+                << "\t-o\t\tOverride all user prompts and go with what gets the job done.\n"
                 << "Options: (* indicates required option)\n"
                 << "\t* -a ACF_FILENAME\tSpecify ACF path and file name.\n"
                 << "\t* -p OBJECT_FILENAME\tName of positioned OBJ object within ACF file.\n"
