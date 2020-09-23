@@ -18,7 +18,11 @@ Just download the KITBASH.EXE file and run kitbash.exe from a command line promp
 
 MAC OS USERS:
 For now.  Download the kitbash.cxx file. Then run...
+
 clang++ -std=c++11 -stdlib=libc++ kitbash.cxx  -o kitbash
+
 then I'm told to...
+
 chmod +x kitbash
+
 then you can run ./kitbash from a command line
