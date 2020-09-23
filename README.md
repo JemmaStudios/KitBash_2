@@ -1,7 +1,7 @@
 # KitBash_2
 Native executable that merges an orphan manipulator OBJ8 file for X-plane onto an existing cockpit OBJ8.
 
-Kitbash 2.0 allows to to create a generic object with a related manipulator file that can be used for ANY aircraft in X-plane 11.  The workflow is...
+Kitbash 2.0 allows you to create a generic object with a related manipulator file that can be used for ANY aircraft in X-plane 11.  The workflow is...
 1) Create an object with animated switches, knobs, etc.  
 2) Create an orphan manipulator object that has the ANIM_MANIP objects and controls defined that would overlay the base object. 
 3) Place your base object in any aircraft in X-plane 11 using PlaneMaker. 
