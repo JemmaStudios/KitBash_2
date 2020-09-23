@@ -29,7 +29,7 @@ typedef chrono::duration<float> float_seconds;
 
 // define constants
 const string VERSION = "2.0.0a0016";
-const bool kb_debug = true;
+const bool kb_debug = false;
 
 // define global variables
 bool ow_switch = false;       // the global overwrite flag can be sent as a switch.
