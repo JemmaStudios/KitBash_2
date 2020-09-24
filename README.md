@@ -12,6 +12,7 @@ Kitbash will find the positioned object, determine the yaw, pitch, roll, and X, 
 
 Known limitations:
 You cannot kitbash an orphan manip file that has moving manipulators.  Yet...
+If the aircraft_cockpit.obj file is NOT at origin 0,0,0 it's borked.   So far...
 
 WINDOWS USERS:
 Just download the KITBASH.EXE file and run kitbash.exe from a command line prompt.
