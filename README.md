@@ -8,11 +8,10 @@ Kitbash 2.0 allows you to create a generic object with a related manipulator fil
 3a) use a text or code editor to fine tune all rotational angles and X,Y,Z offsets in the ACF file.
 4) Run Kitbash 2.0 providing it with path/filename of your ACF file, filename of the new positioned object, path/filename of Orphaned OBJ file, path/filename of aircraft cockpit OBJ file.
 
-Kitbash will find the positioned object, determine the yaw, pitch, roll, and X, Y, Z offsets of your positioned object.  Open the orphaned manipulator file, perform rotational and offset transformations for every vertex.  The open the aircraft cockpit OBJ file and append the calculated vertices as well as re-indexed IDX/IDX10's and ANIM_MANIP sections to the aircraft cockpit OBJ.
+KITBASH will find the positioned object, determine the yaw, pitch, roll, and X, Y, Z offsets of your positioned object.  Open the orphaned manipulator file, perform rotational and offset transformations for every vertex.  The open the aircraft cockpit OBJ file and append the calculated vertices as well as re-indexed IDX/IDX10's and ANIM_MANIP sections to the aircraft cockpit OBJ.  KITBASH also checks for rotation and axial offsets for the aircraft cockpit OBJ and subtracts those from the positioned object so the vertex transformations are positioned correctly.
 
 Known limitations:
 You cannot kitbash an orphan manip file that has moving manipulators.  Yet...
-If the aircraft_cockpit.obj file is NOT at origin 0,0,0 it's borked.   So far...
 
 WINDOWS USERS:
 Just download the KITBASH.EXE file and run kitbash.exe from a command line prompt.
