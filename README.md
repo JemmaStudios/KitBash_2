@@ -20,4 +20,4 @@ MAC USERS:
 Download KITBASH and run ./kitbash from a command line.
 
 LINUX USERS:
-Download KITBASH and do whatever Linux users do...
+Download kitbash.cxx and do linux stuff to it.
