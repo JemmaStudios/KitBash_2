@@ -1,0 +1,6 @@
+.vscode/
+CMakeFiles/
+CMakeCache.txt
+CMakeLists.txt
+KitbashConfig.h
+KitbashConfig.h.in
