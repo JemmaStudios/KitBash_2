@@ -16,13 +16,8 @@ You cannot kitbash an orphan manip file that has moving manipulators.  Yet...
 WINDOWS USERS:
 Just download the KITBASH.EXE file and run kitbash.exe from a command line prompt.
 
-MAC OS USERS:
-For now.  Download the kitbash.cxx file. Then run...
+MAC USERS:
+Download KITBASH and run ./kitbash from a command line.
 
-clang++ -std=c++11 -stdlib=libc++ kitbash.cxx  -o kitbash
-
-then I'm told to...
-
-chmod +x kitbash
-
-then you can run ./kitbash from a command line
+LINUX USERS:
+Download KITBASH and do whatever Linux users do...
