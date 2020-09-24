@@ -28,7 +28,7 @@ typedef chrono::high_resolution_clock Clock;
 typedef chrono::duration<float> float_seconds;
 
 // define constants
-const string VERSION = "2.0.0a0017";
+const string VERSION = "2.0.0a0018";
 const bool kb_debug = false;
 
 // define global variables
@@ -250,16 +250,27 @@ class xp_acf_file {
     are offset and rotated to be placed properly in the aircraft.
     */
         string  xp_acf_fName = "",          // path and name of acf_file.
-                xp_pObj_fName = "",         // name of positioned object to look for. 
+                xp_pObj_fName = "",         // name of positioned object to look for.
+                xp_cObj_fName = "",         // name of interior cockpit object
+                cObj_i_string,              // obj part index within acf file (P _obja/x/ where x = cObj_index)
                 pObj_i_String;              // obj part index within the acf file (P _obja/x/ where x = pObj_index)        
         ifstream xp_acf_file;               // file class created from xp_acf_fName
+        
+        const int interior_cockpit_flag = 2048; // flag bit for unique interior cockpit object.
     public:
-        double  pObj_offset_x,              // offsets of positioned object relative to aircraft origin
-                pObj_offset_y,
+        string  cObj_interior_fName;         // interior cockpit OBJ filename grabbed from ACF file
+        double  pObj_offset_x,              // offsets of positioned object relative to aircraft origin in meters
+                pObj_offset_y,              // [Note: the ACF file stores these in feet so convert before you store]
                 pObj_offset_z,
                 pObj_rotation_psi,          // rotation of positioned object relative to aircraft origin
                 pObj_rotation_theta,
-                pObj_rotation_phi;
+                pObj_rotation_phi,
+                cObj_offset_x,              // offsets of the cockpit object relative to aircraft origin in meters
+                cObj_offset_y,              // [Note: the ACF file stores these in feet so convert before you store]
+                cObj_offset_z,
+                cObj_rotation_psi,          // rotation of interior cockpit object relative to aircraft origin
+                cObj_rotation_theta,
+                cObj_rotation_phi;
 
         int set_acf_fName (string tName) {
             // verifies the file can be opened, and if so saves the file name to xp_acf_fName and returns 1.
@@ -274,25 +285,37 @@ class xp_acf_file {
             } else {
                 return 0;
             }
-        }  
+        }
+
 
         int set_pObj_fName (string tName) {
             /*  parses xp_acf_fName for a positioned object named xp_pObj_fName, if found it will then
                 look up the object offsets and rotations and store then accordingly, and return 1.
                 if it can't find the object within the parse or can't find the offsets, it will return 0.
                 if someone calls this function before setting xp_acf_fName, it'll crash gracefully
+
+                While we have the file open we'll also look for the interior cockpit OBJ file and store
+                the offset and rotation data for it as well.
             */
+
+            const int int_cockpit_flag = 2048;  // the flag bit for the interior cockpit object
+
             if (xp_acf_fName.compare ("") == 0) {
+                // if we haven't set the ACF file name, we can't parse for an object.
                 cerr    << "** Error! Attempt to set a xp_pObj_fName before setting xp_acf_fName in an xp_acf_file object type."
                         << endl;
                 return 0;
             } else {
                 string tLine;
                 int found_it = 0;
+                int pObj_data_count = 0;    // counters to determine if we've found all 6 data.
+                int cObj_data_count = 0;
+                bool found_cObj = false;
                 // now we'll parse the xp_acf_file for the object
                 xp_acf_file.open(xp_acf_fName);
                 if (xp_acf_file.is_open()) {
                     size_t found_pObj_index;
+                    size_t found_objFlags_index;
                     while (getline(xp_acf_file, tLine)) {
                         tLine = string_to_lower (tLine);
                         found_pObj_index = tLine.find(string_to_lower(tName));
@@ -309,13 +332,14 @@ class xp_acf_file {
 
                         // once we find the correct position object, let's get the data we need
                         string pObj_search_string;
-                        if (found_it == 1) {
+                        if ((found_it == 1) && (pObj_data_count < 6)) {
                             // looking for phi (roll) rotation
                             pObj_search_string = pObj_i_String + "_v10_att_phi_ref";
                             found_pObj_index = tLine.find(pObj_search_string);
                             if (found_pObj_index!=string::npos) {
                                 vector<string> phi_parts = split_string (tLine, " ");
                                 pObj_rotation_phi = stof (phi_parts[2]);
+                                pObj_data_count++;
                             }
                             // looking for psi (yaw) rotation
                             pObj_search_string = pObj_i_String + "_v10_att_psi_ref";
@@ -323,6 +347,7 @@ class xp_acf_file {
                             if (found_pObj_index!=string::npos) {
                                 vector<string> psi_parts = split_string (tLine, " ");
                                 pObj_rotation_psi = stof (psi_parts[2]);
+                                pObj_data_count++;
                             }
                             // looking for theta (pitch) rotation
                             pObj_search_string = pObj_i_String + "_v10_att_the_ref";
@@ -330,6 +355,7 @@ class xp_acf_file {
                             if (found_pObj_index!=string::npos) {
                                 vector<string> theta_parts = split_string (tLine, " ");
                                 pObj_rotation_theta = stof (theta_parts[2]);
+                                pObj_data_count++;
                             }
                             // looking for x offset
                             pObj_search_string = pObj_i_String + "_v10_att_x_acf_prt_ref";
@@ -337,6 +363,7 @@ class xp_acf_file {
                             if (found_pObj_index!=string::npos) {
                                 vector<string> x_parts = split_string (tLine, " ");
                                 pObj_offset_x = stof (x_parts[2]) * .3048 ;
+                                pObj_data_count++;
                             }
                             // looking for y offset
                             pObj_search_string = pObj_i_String + "_v10_att_y_acf_prt_ref";
@@ -344,6 +371,7 @@ class xp_acf_file {
                             if (found_pObj_index!=string::npos) {
                                 vector<string> y_parts = split_string (tLine, " ");
                                 pObj_offset_y = stof (y_parts[2]) * .3048;
+                                pObj_data_count++;
                             }
                             // looking for z offset
                             pObj_search_string = pObj_i_String + "_v10_att_z_acf_prt_ref";
@@ -351,11 +379,92 @@ class xp_acf_file {
                             if (found_pObj_index!=string::npos) {
                                 vector<string> z_parts = split_string (tLine, " ");
                                 pObj_offset_z = stof (z_parts[2]) * .3048;
+                                pObj_data_count++;
+                            }
+                        }
+                        if (!found_cObj) {
+                            found_objFlags_index = tLine.find("_obj_flags");
+                            if (found_objFlags_index!=string::npos) {
+                                // found a line with _obj_flags, so we'll see if we found the interior cockpit
+                                vector<string> line_parts = split_string (tLine, " ");
+                                int tmp_flags = stoi(line_parts[2]);
+                                if ((tmp_flags & int_cockpit_flag) == int_cockpit_flag) {
+                                    // found it!
+                                    found_cObj = true;
+                                    line_parts = split_string(line_parts[1], "/");
+                                    cObj_i_string = "p _obja/" + line_parts[1] + "/";
+                                } 
+                            }
+                        }   
+                        if (found_cObj && (cObj_data_count < 7)) {
+                            // we found the cockpit_obj so we'll look for all the offset and rotation lines.                            
+                            // looking for phi (roll) rotation
+                            string cObj_search_string = cObj_i_string + "_v10_att_file_stl";
+                            size_t found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> file_parts = split_string (tLine, " ");
+                                string tmp_name;
+                                size_t tmp_index = file_parts[2].find("/");
+                                if (tmp_index != string::npos) {
+                                    // the file name may include a relative path, so we'll strip that out.
+                                    file_parts = split_string(file_parts[2], "/");
+                                    tmp_name = file_parts[file_parts.size()-1];
+                                } else {
+                                    tmp_name = file_parts[2];
+                                }
+                                cObj_interior_fName = tmp_name;
+                                cObj_data_count++;
+                            }
+                            cObj_search_string = cObj_i_string + "_v10_att_phi_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> phi_parts = split_string (tLine, " ");
+                                cObj_rotation_phi = stof (phi_parts[2]);
+                                cObj_data_count++;
+                            }
+                            // looking for psi (yaw) rotation
+                            cObj_search_string = cObj_i_string + "_v10_att_psi_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> psi_parts = split_string (tLine, " ");
+                                cObj_rotation_psi = stof (psi_parts[2]);
+                                cObj_data_count++;
+                            }
+                            // looking for theta (pitch) rotation
+                            cObj_search_string = cObj_i_string + "_v10_att_the_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> theta_parts = split_string (tLine, " ");
+                                cObj_rotation_theta = stof (theta_parts[2]);
+                                cObj_data_count++;
+                            }
+                            // looking for x offset
+                            cObj_search_string = cObj_i_string + "_v10_att_x_acf_prt_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> x_parts = split_string (tLine, " ");
+                                cObj_offset_x = stof (x_parts[2]) * .3048 ;
+                                cObj_data_count++;
+                            }
+                            // looking for y offset
+                            cObj_search_string = cObj_i_string + "_v10_att_y_acf_prt_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> y_parts = split_string (tLine, " ");
+                                cObj_offset_y = stof (y_parts[2]) * .3048;
+                                cObj_data_count++;
+                            }
+                            // looking for z offset
+                            cObj_search_string = cObj_i_string + "_v10_att_z_acf_prt_ref";
+                            found_cObj_index = tLine.find(cObj_search_string);
+                            if (found_cObj_index!=string::npos) {
+                                vector<string> z_parts = split_string (tLine, " ");
+                                cObj_offset_z = stof (z_parts[2]) * .3048;
+                                cObj_data_count++;
                             }
                         }
                     }
                 }
-
                 return found_it;
             }
         } 
@@ -416,8 +525,16 @@ class xp_manip_file {
                     if (xp_tmp_index!=string::npos) {
                         tLine = strip_delimit_string (tLine);
                         xp_vt tVt(tLine);
-                        tVt.transform(  t_acf_file->pObj_rotation_psi, t_acf_file->pObj_rotation_theta, t_acf_file->pObj_rotation_phi,
-                                        t_acf_file->pObj_offset_x, t_acf_file->pObj_offset_y, t_acf_file->pObj_offset_z);
+                        /* turns out developers create cockpit files that have to be moved around in Planemaker so
+                        we need to be sure to subtract any of those rotational and axial offsets prior to transforming
+                        the manipulator object vertices.
+                        */
+                        tVt.transform(  t_acf_file->pObj_rotation_psi - t_acf_file->cObj_rotation_psi, 
+                                        t_acf_file->pObj_rotation_theta - t_acf_file->cObj_rotation_theta, 
+                                        t_acf_file->pObj_rotation_phi - t_acf_file->cObj_rotation_phi,
+                                        t_acf_file->pObj_offset_x - t_acf_file->cObj_offset_x, 
+                                        t_acf_file->pObj_offset_y - t_acf_file->cObj_offset_y, 
+                                        t_acf_file->pObj_offset_z - t_acf_file->cObj_offset_z);
                         xp_vt_lines.push_back (tVt.get_vt_string("\n").str());  // add line to xp_vt_lines stack.
                     }
                     xp_tmp_index = tLine.find("IDX");
@@ -737,6 +854,31 @@ class xp_cockpit_file {
             return orig_idx_end_index;
         }
 
+        string get_cockpit_fName (bool with_filepath=true) {
+            /*  returns xp_cockpit_fName
+                if with_filepath is false then we'll try to determine if there is a path provided and if so
+                only return the filename without the path
+            */
+            if (with_filepath) {
+                return xp_cockpit_fName;
+            } else {
+                size_t tmp_index = xp_cockpit_fName.find("/");
+                    if (tmp_index != string::npos) {
+                        vector<string> fName_parts = split_string (xp_cockpit_fName, "/");
+                        // return the last chunk
+                        return fName_parts[fName_parts.size() - 1];
+                    }
+                tmp_index = xp_cockpit_fName.find("\\");
+                    if (tmp_index != string::npos) {
+                        vector<string> fName_parts = split_string (xp_cockpit_fName, "\\");
+                        // return the last chunk
+                        return fName_parts[fName_parts.size() - 1];
+                    }
+                // if we got here no paths were found so the stored name should be what they want
+                return xp_cockpit_fName;
+            }
+        }
+
 };
 
 static void print_usage() {
@@ -917,7 +1059,30 @@ if (arg_handler(argc, argv, acf_fName, pObj_name, mObj_fName, cObj_fName) == 1) 
             << "X axis offset:\t\t" << fixed << setprecision (8) << acf_file.pObj_offset_x << "\n"
             << "Y axis offset:\t\t" << acf_file.pObj_offset_y << "\n"
             << "Z axis offset:\t\t" << acf_file.pObj_offset_z << "\n"
+            << "----------------------------------\n"
+            << acf_file.cObj_interior_fName << " identified as the interior cockpit object" << "\n"
+            << "Psi (yaw) rotation:\t" << fixed << setprecision (6) << acf_file.cObj_rotation_psi << "\n"
+            << "Theta (pitch) rotation:\t" << acf_file.cObj_rotation_theta << "\n"
+            << "Phi (roll) rotation:\t" << acf_file.cObj_rotation_phi << "\n"
+            << "X axis offset:\t\t" << fixed << setprecision (8) << acf_file.cObj_offset_x << "\n"
+            << "Y axis offset:\t\t" << acf_file.cObj_offset_y << "\n"
+            << "Z axis offset:\t\t" << acf_file.cObj_offset_z << "\n"
             << endl;
+    if (acf_file.cObj_interior_fName.compare(cockpit_file.get_cockpit_fName(false))!=0) {
+        cout    << "\nPumping the brakes! The ACF file identifies " << acf_file.cObj_interior_fName << " as the interior cockpit OBJ.\n"
+                << "You have identified " << cockpit_file.get_cockpit_fName(false) << " to kitbash. This probably won't work.\n"
+                << "If you think you know what you are doing anyway, type [Y]es to continue: ";
+        string input_string;
+        getline (cin, input_string);
+        char *input_chars = &input_string[0];
+        char input_char = tolower(input_chars[0]);
+        if (input_char != 'y') {
+            cerr << "\nProcess stopped by user.  Enjoy the rest of your day!" << endl;
+            return 1;
+        } else {
+            cout << endl;
+        }
+    }
 
     // read the manipulator.obj file and rotationally and axially transform the VTs from rotational and offset
     // data gleaned from the acf file.
