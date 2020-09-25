@@ -28,7 +28,7 @@ typedef chrono::high_resolution_clock Clock;
 typedef chrono::duration<float> float_seconds;
 
 // define constants
-const string VERSION = "2.0.0a0018";
+const string VERSION = "2.0b01";
 const bool kb_debug = false;
 
 // define global variables
@@ -584,6 +584,7 @@ class xp_cockpit_file {
         string xp_cockpit_fName;            // path and name of cockpit file
         ifstream xp_cockpit_file;           // file pointer to cockpit object
         vector<string> xp_cockpit_lines;    // vector of text lines comprising the cockpit object file
+        int max_index = 0;                  // largest index found in original file. Used for validation.
         int been_here_before = 0;           // has this manipulator object been kitbashed before?
         int orig_vt_count;                  // original number of VTs in the cockpit object file
         int orig_tris_count;                 // original number of indices in the cockpit object file
@@ -635,6 +636,14 @@ class xp_cockpit_file {
                     xp_tmp_index = tLine.find("IDX");
                     if (xp_tmp_index == 0) {
                         orig_idx_end_index = linenum;
+                        tLine = strip_delimit_string (tLine, " ");
+                        vector<string> idx_parts = split_string (tLine, " ");
+                        for (int i = 1; i < idx_parts.size(); i++) {
+                            int t_idx = stoi (idx_parts[i]);
+                            if (t_idx > max_index) {
+                                max_index = t_idx;
+                            }
+                        }
                     }
                 }
                 xp_cockpit_file.close();
@@ -794,6 +803,14 @@ class xp_cockpit_file {
             } else return 1;
             // Let's make a backup.
 
+            if ((orig_vt_count - 1) != max_index) {
+                /*  If the vt_count and the max_index found don't jive then the cockpit OBJ is screwed up and
+                    our re-indexing will cause the manipulators to look like scrambled eggs (trust me) so we'll
+                    return gracefully before we get the powered whisk out.
+                */
+                return 5;
+            }
+
             if (!backup_cockpit_file(xp_cockpit_fName))
                 return 2;
             else {
@@ -877,6 +894,11 @@ class xp_cockpit_file {
                 // if we got here no paths were found so the stored name should be what they want
                 return xp_cockpit_fName;
             }
+        }
+
+        int get_max_index () {
+
+            return max_index;
         }
 
 };
@@ -999,7 +1021,7 @@ int arg_handler (int argc, char* argv[], string &acf_fName, string &pObj_name, s
 
 int main(int argc, char* argv[]) {
 
-    string kb_title = "KITBASH 2.0 ver " + VERSION; // title string for output
+    string kb_title = "KITBASH ver " + VERSION; // title string for output
     if (kb_debug) {
         kb_title += " ***DEBUG MODE***";
     }
@@ -1116,6 +1138,19 @@ if (arg_handler(argc, argv, acf_fName, pObj_name, mObj_fName, cObj_fName) == 1) 
                 break;
             case 4:
                 cerr << "** ERROR! Unable to analyze cockpit OBJ file. Process stopped." << endl;
+                return 1;
+                break;
+            case 5:
+                cerr    << "** ERROR! This is a rare one! The last person to modify the cockpit object messed something up.\n"
+                        << "The POINT_COUNTS line indicates there are " << cockpit_file.get_vt_count(0) << " VTs, "
+                        << "but the last index found was " << cockpit_file.get_max_index() << ".\n"
+                        << "Assuming the aircraft loads into X-Plane and works, it's likely a typo in the POINT_COUNTS line.\n"
+                        << "I suggest you open " << cockpit_file.get_cockpit_fName(false) << " in a text/code editor\n"
+                        << "and try changing the POINT_COUNTS line to read: POINT_COUNTS " 
+                        << cockpit_file.get_max_index() + 1 << " 0 0 " << cockpit_file.get_idx_count() << "\n"
+                        << "then reload the aircraft and make sure everything works properly before you KITBASH.\n"
+                        << "If that doesn't work, you'll need to get it figured out before KITBASH will run otherwise \n"
+                        << "the new manipulators would come in all scrambled up. (Take my word for it)." << endl;
                 return 1;
                 break;
             case 3:
