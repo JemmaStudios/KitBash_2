@@ -1,9 +1,6 @@
 .vscode/
 CMakeFiles/
 CMakeCache.txt
-CMakeLists.txt
-KitbashConfig.h
-KitbashConfig.h.in
 KITBASH 2.docx
 KITBASH 2.zip
 .gitignore
