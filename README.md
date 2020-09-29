@@ -21,3 +21,8 @@ Download KITBASH and run ./kitbash from a command line.
 
 LINUX USERS:
 Download kitbash.cxx and do linux stuff to it.
+
+Source code available at https://github.com/JemmaStudios/KitBash_2
+
+DONATE-WARE:
+If you love what you see (or even if you like it a little) feel free to show it through a contribution at https://paypal.me/JemmaStudios
